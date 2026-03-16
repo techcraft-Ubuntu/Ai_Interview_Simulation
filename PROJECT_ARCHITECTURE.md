@@ -12,8 +12,8 @@ This is a comprehensive AI-driven career development platform with three main se
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Frontend (React/TypeScript)               │
-│              (localhost:5173 or production URL)              │
+│                    Frontend (React/TypeScript)              │
+│              (localhost:5173 or production URL)             │
 └────────────┬─────────────────┬─────────────────┬────────────┘
              │                 │                 │
       Resume Upload     Job Analysis      Start Interview
