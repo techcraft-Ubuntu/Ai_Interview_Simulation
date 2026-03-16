@@ -1,204 +1,205 @@
-import { useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from "recharts";
-import "./App.css";
+import React, { useState } from 'react';
+import { ResumeUpload } from './components/ResumeUpload';
+import { ResumeAnalysis } from './components/ResumeAnalysis';
+import { InterviewInterface } from './components/InterviewInterface';
+import { InterviewReport } from './components/InterviewReport';
+import { interviewAPI } from './services/apiService';
+import './App.css';
+
+type AppState = 
+  | 'upload' 
+  | 'analysis' 
+  | 'interview' 
+  | 'report';
 
 function App() {
-  const [file, setFile] = useState<File | null>(null);
-  const [company, setCompany] = useState("");
-  const [role, setRole] = useState("");
-  const [result, setResult] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [currentState, setCurrentState] = useState<AppState>('upload');
+  const [isLoading, setIsLoading] = useState(false);
+  const [resumeText, setResumeText] = useState('');
+  const [analysisData, setAnalysisData] = useState<any>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState('');
+  const [interviewReport, setInterviewReport] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const toggleSection = (section: string) => {
-    setOpenSection(openSection === section ? null : section);
+  // Handle resume upload completion
+  const handleResumeAnalysisComplete = (analysis: any, resume: string) => {
+    setAnalysisData(analysis);
+    setResumeText(resume);
+    setCurrentState('analysis');
+    setError(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file || !company || !role) return;
+  // Handle role selection and start interview
+  const handleSelectRole = async (role: string, company: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setSelectedRole(role);
+      setSelectedCompany(company);
 
-    const formData = new FormData();
-    formData.append("resume", file);
-    formData.append("company", company);
-    formData.append("role", role);
+      // Start interview session
+      const response = await interviewAPI.startInterview(
+        resumeText,
+        role,
+        company,
+        5 // 5 questions
+      );
 
-    setLoading(true);
+      if (response.success) {
+        setSessionId(response.data.sessionId);
+        setCurrentState('interview');
+      } else {
+        setError(response.error || 'Failed to start interview');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error starting interview');
+      console.error('Interview start error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const response = await fetch("http://127.0.0.1:5000/analyze", {
-      method: "POST",
-      body: formData,
-    });
+  // Handle interview completion
+  const handleInterviewComplete = (report: any) => {
+    setInterviewReport(report);
+    setCurrentState('report');
+  };
 
-    const data = await response.json();
-    setResult(data);
-    setLoading(false);
+  // Handle abandon interview
+  const handleAbandonInterview = () => {
+    setCurrentState('analysis');
+    setSessionId(null);
+  };
+
+  // Handle start new interview
+  const handleStartNewInterview = () => {
+    setCurrentState('analysis');
+    setSessionId(null);
+    setInterviewReport(null);
+  };
+
+  // Handle report download
+  const handleDownloadReport = () => {
+    if (!interviewReport) return;
+
+    const reportText = `
+Interview Report
+================
+
+Role: ${selectedRole}
+Company: ${selectedCompany}
+Overall Score: ${interviewReport.overallScore}/100
+Verdict: ${interviewReport.feedback?.interview_verdict}
+
+Performance Summary:
+${interviewReport.feedback?.performance_summary}
+
+Technical Skills: ${interviewReport.feedback?.technical_skills_assessment?.rating}
+Communication: ${interviewReport.feedback?.communication_skills?.rating}
+Problem Solving: ${interviewReport.feedback?.problem_solving?.rating}
+Cultural Fit: ${interviewReport.feedback?.cultural_fit?.rating}
+
+Top Strengths:
+${interviewReport.feedback?.top_strengths?.map((s: string) => `- ${s}`).join('\n')}
+
+Areas for Development:
+${interviewReport.feedback?.areas_for_development?.map((a: string) => `- ${a}`).join('\n')}
+
+Next Steps:
+${interviewReport.feedback?.next_steps_recommendations?.map((r: string) => `- ${r}`).join('\n')}
+
+Questions & Answers:
+${interviewReport.questionsAndAnswers?.map((qa: any, idx: number) => `
+Q${idx + 1}: ${qa.question}
+Score: ${qa.score}/100
+Your Answer: ${qa.answer}
+`).join('\n---\n')}
+    `;
+
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(reportText));
+    element.setAttribute('download', `interview-report-${new Date().toISOString().slice(0, 10)}.txt`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
 
   return (
-    <div className="page">
-      <div className="center-box">
-        <h1>Virtual AI Interview Simulation</h1>
-        <p className="subtitle">AI-Powered Resume Intelligence</p>
+    <div className="app-container">
+      {/* Navigation Header */}
+      <header className="app-header">
+        <div className="header-content">
+          <h1>🎯 AI Career Development Platform</h1>
+          <p>Resume Analysis + AI Interview Simulation</p>
+        </div>
+        <div className="progress-indicator">
+          <span className={currentState === 'upload' ? 'active' : 'done'}>1. Upload</span>
+          <span className="separator">→</span>
+          <span className={currentState === 'analysis' ? 'active' : 'done'}>2. Analyze</span>
+          <span className="separator">→</span>
+          <span className={currentState === 'interview' ? 'active' : 'done'}>3. Interview</span>
+          <span className="separator">→</span>
+          <span className={currentState === 'report' ? 'active' : ''}>4. Report</span>
+        </div>
+      </header>
 
-        {/* FORM */}
-        <form onSubmit={handleSubmit} className="form-card">
-          <input
-            type="file"
-            accept=".pdf"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
-
-          <select value={company} onChange={(e) => setCompany(e.target.value)}>
-            <option value="">Select Company</option>
-            <option value="Google">Google</option>
-            <option value="Infosys">Infosys</option>
-            <option value="Startup">Startup</option>
-          </select>
-
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="Auto Detect">Auto Detect</option>
-            <option value="Backend Developer">Backend Developer</option>
-            <option value="Data Analyst">Data Analyst</option>
-            <option value="ML Engineer">ML Engineer</option>
-            <option value="Full Stack Developer">Full Stack Developer</option>
-          </select>
-
-          <button type="submit">
-            {loading ? "Analyzing..." : "Analyze Resume"}
-          </button>
-        </form>
-
-        {/* DASHBOARD */}
-        {result && (
-          <div className="dashboard-layout">
-
-            {/* LEFT PANEL */}
-            <div className="left-panel">
-
-              {/* SCORE */}
-              <div className="score-card">
-                <div className="score-circle">
-                  {result.overall_match_score}%
-                </div>
-                <p className="score-label">Overall AI Match</p>
-              </div>
-
-              {/* SELECTED ROLE */}
-              <div className="stack-card">
-                <h3>Selected Role: {result.selected_role}</h3>
-              </div>
-
-              {/* TECH STACK */}
-              <div className="stack-card">
-                <h3>Detected Tech Stack</h3>
-                <p><strong>Primary:</strong> {result.detected_stack?.primary_language}</p>
-                <p><strong>Frameworks:</strong> {result.detected_stack?.frameworks?.join(", ")}</p>
-                <p><strong>Databases:</strong> {result.detected_stack?.databases?.join(", ")}</p>
-                <p><strong>Tools:</strong> {result.detected_stack?.tools?.join(", ")}</p>
-              </div>
-
-              {/* RECOMMENDED COMPANIES */}
-              <div className="stack-card">
-                <h3>Recommended Companies</h3>
-                <ul>
-                  {result.recommended_companies?.map((c: string, i: number) => (
-                    <li key={i}>{c}</li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* ROLE FIT CHART */}
-              <div className="chart-card">
-                <h3>Role Fit Breakdown</h3>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart
-                    data={[
-                      { name: "Tech", value: result.role_fit_breakdown?.technical_skills },
-                      { name: "Projects", value: result.role_fit_breakdown?.project_relevance },
-                      { name: "Stack", value: result.role_fit_breakdown?.stack_alignment },
-                      { name: "Experience", value: result.role_fit_breakdown?.experience_depth },
-                    ]}
-                  >
-                    <XAxis dataKey="name" />
-                    <YAxis domain={[0, 100]} />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="#4ade80" radius={[6,6,0,0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* RESUME SECTION RADAR */}
-              <div className="chart-card">
-                <h3>Resume Section Analysis</h3>
-                <ResponsiveContainer width="100%" height={240}>
-                  <RadarChart
-                    data={[
-                      { subject: "Education", value: result.resume_section_analysis?.education_score },
-                      { subject: "Projects", value: result.resume_section_analysis?.projects_score },
-                      { subject: "Skills", value: result.resume_section_analysis?.skills_section_score },
-                      { subject: "Experience", value: result.resume_section_analysis?.experience_score },
-                      { subject: "Certifications", value: result.resume_section_analysis?.certifications_score },
-                    ]}
-                  >
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="subject" />
-                    <PolarRadiusAxis domain={[0, 100]} />
-                    <Radar dataKey="value" stroke="#60a5fa" fill="#60a5fa" fillOpacity={0.5} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-
-            </div>
-
-            {/* RIGHT PANEL */}
-            <div className="right-panel">
-              {[
-                { key: "strengths", label: "Strengths" },
-                { key: "missing_skills", label: "Skill Gaps" },
-                { key: "resume_improvements", label: "Resume Enhancements" },
-                { key: "interview_focus", label: "Interview Focus Areas" },
-                { key: "recommended_projects", label: "Recommended Projects" },
-              ].map((section) => (
-                <div key={section.key} className="analysis-card">
-                  <div
-                    className="section-header"
-                    onClick={() => toggleSection(section.key)}
-                  >
-                    <h3>{section.label}</h3>
-                    <span>{openSection === section.key ? "▲" : "▼"}</span>
-                  </div>
-
-                  <div
-                    className={`section-content ${
-                      openSection === section.key ? "open" : ""
-                    }`}
-                  >
-                    <ul>
-                      {result[section.key]?.map((item: string, i: number) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
-            </div>
-
+      {/* Main Content */}
+      <main className="app-main">
+        {error && (
+          <div className="global-error">
+            <p>{error}</p>
+            <button onClick={() => setError(null)}>Dismiss</button>
           </div>
         )}
-      </div>
+
+        {isLoading && (
+          <div className="global-loading">
+            <div className="spinner-large"></div>
+            <p>Processing...</p>
+          </div>
+        )}
+
+        {!isLoading && currentState === 'upload' && (
+          <ResumeUpload
+            onAnalysisComplete={handleResumeAnalysisComplete}
+            onLoading={setIsLoading}
+          />
+        )}
+
+        {!isLoading && currentState === 'analysis' && analysisData && (
+          <ResumeAnalysis
+            analysis={analysisData}
+            onSelectRole={handleSelectRole}
+            onLoading={setIsLoading}
+          />
+        )}
+
+        {!isLoading && currentState === 'interview' && sessionId && (
+          <InterviewInterface
+            sessionId={sessionId}
+            jobRole={selectedRole}
+            company={selectedCompany}
+            onComplete={handleInterviewComplete}
+            onAbandon={handleAbandonInterview}
+          />
+        )}
+
+        {!isLoading && currentState === 'report' && interviewReport && (
+          <InterviewReport
+            report={interviewReport}
+            onStartNewInterview={handleStartNewInterview}
+            onDownloadReport={handleDownloadReport}
+          />
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="app-footer">
+        <p>&copy; 2024 AI Career Development Platform. All rights reserved.</p>
+      </footer>
     </div>
   );
 }

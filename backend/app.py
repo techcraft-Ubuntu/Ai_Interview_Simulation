@@ -12,8 +12,9 @@ CORS(app)
 @app.route("/")
 def home():
     return "Backend Running Successfully"
-# Register routes
-app.register_blueprint(resume_bp)
+
+# Register routes with URL prefix
+app.register_blueprint(resume_bp, url_prefix='/api/resume')
 
 if __name__ == "__main__":
     app.run(debug=True)
