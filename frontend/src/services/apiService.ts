@@ -20,14 +20,18 @@ export const resumeAPI = {
     try {
       const response = await fetch(`${API_BASE_URL}/api/resume/upload`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: {
+          Accept: 'application/json'
+        }
       });
 
+      const data = await response.json();
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+        throw new Error(data?.error || `Upload failed: ${response.statusText}`);
       }
 
-      return await response.json();
+      return data;
     } catch (error) {
       console.error('Resume upload error:', error);
       throw error;
