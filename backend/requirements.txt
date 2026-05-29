@@ -16,3 +16,4 @@ pypdfium2==5.5.0
 Werkzeug==3.1.6
 python-dotenv==1.2.2
 groq==1.1.2
+gunicorn
