@@ -1,13 +1,13 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef, type ChangeEvent, type DragEvent, type FC } from 'react';
 import { resumeAPI } from '../services/apiService';
 import './ResumeUpload.css';
 
 interface ResumeUploadProps {
-  onAnalysisComplete: (analysisData: any, resumeText: string) => void;
+  onAnalysisComplete: (analysisData: any, resumeText: string, role: string, company: string) => void;
   onLoading?: (isLoading: boolean) => void;
 }
 
-export const ResumeUpload: React.FC<ResumeUploadProps> = ({
+export const ResumeUpload: FC<ResumeUploadProps> = ({
   onAnalysisComplete,
   onLoading
 }) => {
@@ -17,7 +17,7 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(true);
   };
@@ -26,7 +26,7 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
     const files = e.dataTransfer.files;
@@ -35,16 +35,29 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
     }
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.currentTarget.files;
     if (files && files.length > 0) {
       handleFile(files[0]);
     }
   };
 
+  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState('');
+
   const handleFile = async (file: File) => {
     setError(null);
     setSuccess(false);
+
+    if (!selectedRole) {
+      setError('Please select the role you want this resume reviewed for.');
+      return;
+    }
+
+    if (!selectedCompany) {
+      setError('Please select the target company for this review.');
+      return;
+    }
 
     // Validate file type
     if (!file.name.endsWith('.pdf')) {
@@ -62,12 +75,16 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
       setIsLoading(true);
       onLoading?.(true);
 
-      const response = await resumeAPI.uploadResume(file);
+      const response = await resumeAPI.uploadResume(file, selectedRole, selectedCompany);
 
       if (response.success) {
         setSuccess(true);
-        // Pass the analysis data and resume text to parent component
-        onAnalysisComplete(response.data, response.data.resume_text || '');
+        onAnalysisComplete(
+          response.data,
+          response.data.resume_text || '',
+          selectedRole,
+          selectedCompany
+        );
       } else {
         setError(response.error || 'Failed to analyze resume');
       }
@@ -85,6 +102,46 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
       <div className="resume-upload-header">
         <h2>Upload Your Resume</h2>
         <p>Start by uploading your resume for AI analysis</p>
+      </div>
+
+      <div className="upload-meta">
+        <div className="meta-field">
+          <label htmlFor="role-select">Review Role</label>
+          <select
+            id="role-select"
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+          >
+            <option value="">-- Select role --</option>
+            <option value="Frontend Developer">Frontend Developer</option>
+            <option value="Backend Developer">Backend Developer</option>
+            <option value="Full Stack Developer">Full Stack Developer</option>
+            <option value="Data Engineer">Data Engineer</option>
+            <option value="ML Engineer">ML Engineer</option>
+            <option value="DevOps Engineer">DevOps Engineer</option>
+            <option value="QA Engineer">QA Engineer</option>
+            <option value="Solutions Architect">Solutions Architect</option>
+          </select>
+        </div>
+
+        <div className="meta-field">
+          <label htmlFor="company-select">Target Company</label>
+          <select
+            id="company-select"
+            value={selectedCompany}
+            onChange={(e) => setSelectedCompany(e.target.value)}
+          >
+            <option value="">-- Select company --</option>
+            <option value="Google">Google</option>
+            <option value="Amazon">Amazon</option>
+            <option value="Microsoft">Microsoft</option>
+            <option value="Meta">Meta</option>
+            <option value="Netflix">Netflix</option>
+            <option value="Apple">Apple</option>
+            <option value="IBM">IBM</option>
+            <option value="Startup">Startup</option>
+          </select>
+        </div>
       </div>
 
       <div

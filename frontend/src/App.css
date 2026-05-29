@@ -9,8 +9,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f7fa;
-  color: #333;
+  background-color: #ffffff;
+  color: #1a1a1a;
+  font-size: 18px;
 }
 
 /* Main App Container */
@@ -18,26 +19,26 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%);
 }
 
 /* Header */
 .app-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
   color: white;
-  padding: 40px 20px;
+  padding: 50px 20px;
   text-align: center;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .header-content h1 {
-  font-size: 2.5rem;
+  font-size: 3rem;
   margin: 0 0 10px 0;
   font-weight: 700;
 }
 
 .header-content p {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   margin: 0;
   opacity: 0.9;
 }

@@ -10,14 +10,46 @@
 }
 
 .resume-upload-header h2 {
-  font-size: 2.5rem;
-  color: #333;
+  font-size: 3rem;
+  color: #1a1a1a;
   margin-bottom: 10px;
 }
 
 .resume-upload-header p {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   color: #666;
+}
+
+.upload-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.meta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.meta-field label {
+  font-weight: 600;
+  color: #333;
+}
+
+.meta-field select {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.meta-field select:focus {
+  border-color: #2196F3;
+  outline: none;
 }
 
 .resume-drop-zone {

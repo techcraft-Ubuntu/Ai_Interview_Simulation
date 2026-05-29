@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent, type FC } from 'react';
 import { interviewAPI } from '../services/apiService';
 import './InterviewInterface.css';
 
@@ -10,7 +10,7 @@ interface InterviewInterfaceProps {
   onAbandon: () => void;
 }
 
-export const InterviewInterface: React.FC<InterviewInterfaceProps> = ({
+export const InterviewInterface: FC<InterviewInterfaceProps> = ({
   sessionId,
   jobRole,
   company,
@@ -24,7 +24,6 @@ export const InterviewInterface: React.FC<InterviewInterfaceProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<any>(null);
   const [progress, setProgress] = useState<any>(null);
-  const [showFollowUpOption, setShowFollowUpOption] = useState(false);
   const [charCount, setCharCount] = useState(0);
 
   useEffect(() => {
@@ -57,7 +56,7 @@ export const InterviewInterface: React.FC<InterviewInterfaceProps> = ({
     }
   };
 
-  const handleAnswerChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleAnswerChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     setAnswer(text);
     setCharCount(text.length);
@@ -78,7 +77,6 @@ export const InterviewInterface: React.FC<InterviewInterfaceProps> = ({
 
       if (response.success) {
         setFeedback(response.data.evaluation);
-        setShowFollowUpOption(true);
 
         // Reload progress
         const progressRes = await interviewAPI.getProgress(sessionId);
@@ -106,7 +104,6 @@ export const InterviewInterface: React.FC<InterviewInterfaceProps> = ({
     setAnswer('');
     setCharCount(0);
     setFeedback(null);
-    setShowFollowUpOption(false);
     loadQuestion();
   };
 

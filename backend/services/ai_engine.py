@@ -35,6 +35,7 @@ def extract_json_from_text(text):
 def build_default_analysis(role, company):
     return {
         "selected_role": role,
+        "target_company": company,
         "detected_stack": {
             "primary_language": "",
             "frameworks": [],
@@ -42,6 +43,7 @@ def build_default_analysis(role, company):
             "tools": []
         },
         "overall_match_score": 0,
+        "applicability_verdict": "",
         "recommended_companies": [],
         "suggested_application_companies": [],
         "role_fit_breakdown": {
@@ -61,8 +63,10 @@ def build_default_analysis(role, company):
             "project_impact_quality": ""
         },
         "strengths": [],
+        "weaknesses": [],
         "missing_skills": [],
         "resume_improvements": [],
+        "improvement_plan": [],
         "interview_focus": [],
         "recommended_projects": []
     }
@@ -114,18 +118,17 @@ STRICT RULES:
 - No text before or after JSON.
 
 User Selected Role: {role}
+User Target Company: {company}
 
 Tasks:
 
-1. Use the selected role as final role.
-2. Score the resume strictly against the selected role.
-3. Recommend companies based on:
-   - Selected role
-   - Tech stack in resume
-   - Skill maturity
-4. Do NOT always suggest Google, Amazon, Microsoft.
-5. Vary companies depending on role and stack.
-6. Suggested companies must be realistic and role-specific.
+1. Use the selected role and target company as the comparison basis.
+2. Analyze how well the resume matches the desired role and company.
+3. Score the resume with a clear match percentage.
+4. Identify strengths, weaknesses, and exact skill gaps.
+5. Recommend whether the candidate is a strong fit, moderate fit, or needs improvement.
+6. Provide a clear improvement plan and suggestions for better alignment.
+7. Recommend interview focus areas for this role.
 
 Return JSON format EXACTLY:
 
@@ -169,8 +172,11 @@ Return JSON format EXACTLY:
   }},
 
   "strengths": [],
+  "weaknesses": [],
   "missing_skills": [],
   "resume_improvements": [],
+  "applicability_verdict": "",
+  "improvement_plan": [],
   "interview_focus": [],
   "recommended_projects": []
 }}
@@ -193,9 +199,14 @@ Resume:
             max_tokens=1500
         )
         content = response.choices[0].message.content.strip()
-        return extract_json_from_text(content)
+        parsed = extract_json_from_text(content)
+        parsed["selected_role"] = parsed.get("selected_role", role)
+        parsed["target_company"] = parsed.get("target_company", company)
+        return parsed
     except Exception as initial_error:
-        print("AI resume analysis first pass failed:", initial_error)
+        print("AI resume analysis first pass failed:", str(initial_error))
+        import traceback
+        traceback.print_exc()
 
     retry_prompt = prompt + "\n\nIMPORTANT: Return only the JSON object and nothing else."
     try:
@@ -208,6 +219,8 @@ Resume:
         fallback_content = response.choices[0].message.content.strip()
         return extract_json_from_text(fallback_content)
     except Exception as retry_error:
-        print("AI resume analysis retry failed:", retry_error)
+        print("AI resume analysis retry failed:", str(retry_error))
+        import traceback
+        traceback.print_exc()
         print("Fallback raw output:", fallback_content if 'fallback_content' in locals() else 'No fallback content')
         return build_default_analysis(role, company)

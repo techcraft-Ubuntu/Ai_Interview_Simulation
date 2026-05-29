@@ -1,24 +1,44 @@
-import React, { useState } from 'react';
+
+import { useState, useEffect, type FC } from 'react';
 import './ResumeAnalysis.css';
 
 interface ResumeAnalysisProps {
   analysis: any;
+  jobRole?: string;
+  company?: string;
   onSelectRole: (role: string, company: string) => void;
   onLoading?: (isLoading: boolean) => void;
 }
 
-export const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({
+export const ResumeAnalysis: FC<ResumeAnalysisProps> = ({
   analysis,
+  jobRole,
+  company,
   onSelectRole,
   onLoading
 }) => {
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(
+    jobRole || analysis.selected_role || null
+  );
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(
+    company || analysis.requested_company || null
+  );
+
+  useEffect(() => {
+    setSelectedRole(jobRole || analysis.selected_role || null);
+  }, [jobRole, analysis.selected_role]);
+
+  useEffect(() => {
+    setSelectedCompany(company || analysis.requested_company || null);
+  }, [company, analysis.requested_company]);
 
   const handleStartInterview = () => {
-    if (selectedRole && selectedCompany) {
+    const roleToUse = selectedRole || jobRole || analysis.selected_role;
+    const companyToUse = selectedCompany || company || analysis.requested_company;
+
+    if (roleToUse && companyToUse) {
       onLoading?.(true);
-      onSelectRole(selectedRole, selectedCompany);
+      onSelectRole(roleToUse, companyToUse);
     }
   };
 
@@ -26,6 +46,35 @@ export const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({
     <div className="resume-analysis-container">
       <div className="analysis-header">
         <h2>Resume Analysis Results</h2>
+        <p className="analysis-summary">
+          This review was prepared for <strong>{jobRole || analysis.selected_role || 'the selected role'}</strong>
+          {company || analysis.requested_company ? ` at ${company || analysis.requested_company}` : ''}.
+        </p>
+      </div>
+
+      <div className="analysis-summary-card">
+        <div>
+          <span>Match Score</span>
+          <strong>{analysis.overall_match_score ?? 0}%</strong>
+        </div>
+        <div>
+          <span>Review Verdict</span>
+          <strong>
+            {analysis.overall_match_score >= 75
+              ? 'Strong Match'
+              : analysis.overall_match_score >= 50
+              ? 'Moderate Match'
+              : 'Needs Improvement'}
+          </strong>
+        </div>
+        <div>
+          <span>Recommended Action</span>
+          <strong>
+            {analysis.overall_match_score >= 75
+              ? 'Ready to interview'
+              : 'Focus on skill gaps and resume alignment'}
+          </strong>
+        </div>
       </div>
 
       {/* Tech Stack Section */}
@@ -102,12 +151,12 @@ export const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({
         <div className="role-selector">
           <label>Job Role:</label>
           <select
-            value={selectedRole || ''}
+            value={selectedRole || jobRole || analysis.selected_role || ''}
             onChange={(e) => setSelectedRole(e.target.value || null)}
             className="selector-input"
           >
             <option value="">-- Select a role --</option>
-            <option value={analysis.selected_role}>{analysis.selected_role}</option>
+            <option value={analysis.selected_role || jobRole}>{analysis.selected_role || jobRole}</option>
             <option value="Frontend Developer">Frontend Developer</option>
             <option value="Backend Developer">Backend Developer</option>
             <option value="Full Stack Developer">Full Stack Developer</option>
@@ -122,14 +171,17 @@ export const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({
         <div className="company-selector">
           <label>Target Company:</label>
           <select
-            value={selectedCompany || ''}
+            value={selectedCompany || company || ''}
             onChange={(e) => setSelectedCompany(e.target.value || null)}
             className="selector-input"
           >
             <option value="">-- Select a company --</option>
-            {analysis.suggested_application_companies?.map((company: any, idx: number) => (
-              <option key={idx} value={company.name}>{company.name}</option>
+            {analysis.suggested_application_companies?.map((companyItem: any, idx: number) => (
+              <option key={idx} value={companyItem.name}>{companyItem.name}</option>
             ))}
+            {company && !analysis.suggested_application_companies?.some((item: any) => item.name === company) && (
+              <option value={company}>{company}</option>
+            )}
             <option value="Google">Google</option>
             <option value="Amazon">Amazon</option>
             <option value="Microsoft">Microsoft</option>
@@ -157,6 +209,17 @@ export const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({
           <ul className="list-items">
             {analysis.resume_improvements.map((improvement: string, idx: number) => (
               <li key={idx}>{improvement}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {analysis.improvement_plan?.length > 0 && (
+        <div className="analysis-section">
+          <h3>🛠 Improvement Plan</h3>
+          <ul className="list-items">
+            {analysis.improvement_plan.map((step: string, idx: number) => (
+              <li key={idx}>{step}</li>
             ))}
           </ul>
         </div>

@@ -13,9 +13,11 @@ export const resumeAPI = {
   /**
    * Upload and analyze resume
    */
-  async uploadResume(file) {
+  async uploadResume(file: File, role: string, company: string) {
     const formData = new FormData();
     formData.append('resume', file);
+    formData.append('role', role);
+    formData.append('company', company);
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/resume/upload`, {
@@ -41,7 +43,7 @@ export const resumeAPI = {
   /**
    * Get resume analysis results
    */
-  async getAnalysis(analysisId) {
+  async getAnalysis(analysisId: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/resume/analysis/${analysisId}`);
 
@@ -65,7 +67,7 @@ export const interviewAPI = {
   /**
    * Start a new interview session
    */
-  async startInterview(resumeText, jobRole, company = 'General', questionCount = 5) {
+  async startInterview(resumeText: string, jobRole: string, company = 'General', questionCount = 5) {
     try {
       const response = await fetch(`${INTERVIEW_API_BASE_URL}/api/interview/start`, {
         method: 'POST',
@@ -94,7 +96,7 @@ export const interviewAPI = {
   /**
    * Get current question
    */
-  async getQuestion(sessionId) {
+  async getQuestion(sessionId: string) {
     try {
       const response = await fetch(`${INTERVIEW_API_BASE_URL}/api/interview/${sessionId}/question`);
 
@@ -112,7 +114,7 @@ export const interviewAPI = {
   /**
    * Submit answer and get evaluation
    */
-  async submitAnswer(sessionId, answer) {
+  async submitAnswer(sessionId: string, answer: string) {
     try {
       const response = await fetch(`${INTERVIEW_API_BASE_URL}/api/interview/${sessionId}/submit`, {
         method: 'POST',
@@ -136,7 +138,7 @@ export const interviewAPI = {
   /**
    * Get follow-up question
    */
-  async getFollowUpQuestion(sessionId, question, answer) {
+  async getFollowUpQuestion(sessionId: string, question: string, answer: string) {
     try {
       const response = await fetch(`${INTERVIEW_API_BASE_URL}/api/interview/${sessionId}/follow-up`, {
         method: 'POST',
@@ -160,7 +162,7 @@ export const interviewAPI = {
   /**
    * Complete interview
    */
-  async completeInterview(sessionId) {
+  async completeInterview(sessionId: string) {
     try {
       const response = await fetch(`${INTERVIEW_API_BASE_URL}/api/interview/${sessionId}/complete`, {
         method: 'POST',
@@ -183,7 +185,7 @@ export const interviewAPI = {
   /**
    * Get session report
    */
-  async getReport(sessionId) {
+  async getReport(sessionId: string) {
     try {
       const response = await fetch(`${INTERVIEW_API_BASE_URL}/api/interview/${sessionId}/report`);
 
@@ -201,7 +203,7 @@ export const interviewAPI = {
   /**
    * Get interview progress
    */
-  async getProgress(sessionId) {
+  async getProgress(sessionId: string) {
     try {
       const response = await fetch(`${INTERVIEW_API_BASE_URL}/api/interview/${sessionId}/progress`);
 
@@ -219,7 +221,7 @@ export const interviewAPI = {
   /**
    * Abandon interview
    */
-  async abandonInterview(sessionId) {
+  async abandonInterview(sessionId: string) {
     try {
       const response = await fetch(`${INTERVIEW_API_BASE_URL}/api/interview/${sessionId}/abandon`, {
         method: 'POST',

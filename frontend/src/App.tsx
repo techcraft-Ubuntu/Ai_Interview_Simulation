@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ResumeUpload } from './components/ResumeUpload';
 import { ResumeAnalysis } from './components/ResumeAnalysis';
 import { InterviewInterface } from './components/InterviewInterface';
@@ -24,9 +24,15 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   // Handle resume upload completion
-  const handleResumeAnalysisComplete = (analysis: any, resume: string) => {
-    setAnalysisData(analysis);
+  const handleResumeAnalysisComplete = (analysis: any, resume: string, role: string, company: string) => {
+    setAnalysisData({
+      ...analysis,
+      selected_role: analysis.selected_role || role,
+      requested_company: analysis.requested_company || company
+    });
     setResumeText(resume);
+    setSelectedRole(role);
+    setSelectedCompany(company);
     setCurrentState('analysis');
     setError(null);
   };
@@ -172,6 +178,8 @@ Your Answer: ${qa.answer}
         {!isLoading && currentState === 'analysis' && analysisData && (
           <ResumeAnalysis
             analysis={analysisData}
+            jobRole={selectedRole}
+            company={selectedCompany}
             onSelectRole={handleSelectRole}
             onLoading={setIsLoading}
           />

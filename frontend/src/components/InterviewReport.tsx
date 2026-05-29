@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type FC } from 'react';
 import './InterviewReport.css';
 
 interface InterviewReportProps {
@@ -7,7 +7,7 @@ interface InterviewReportProps {
   onDownloadReport: () => void;
 }
 
-export const InterviewReport: React.FC<InterviewReportProps> = ({
+export const InterviewReport: FC<InterviewReportProps> = ({
   report,
   onStartNewInterview,
   onDownloadReport

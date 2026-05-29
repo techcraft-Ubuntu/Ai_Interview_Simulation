@@ -27,7 +27,9 @@ def upload():
             "success": True,
             "data": {
                 "resume_text": text,
-                **ai_result  # Spread the AI analysis result
+                "requested_role": role,
+                "requested_company": company,
+                **ai_result
             }
         }
 
